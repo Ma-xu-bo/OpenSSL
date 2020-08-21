@@ -1,0 +1,85 @@
+#+STARTUP: showall hidestars
+* The download for OpenSSL source code.
+
+* The installation for OpenSSL.
+  1. wget http://www.openssl.org/source/old/1.1.1/openssl-1.1.1f.tar.gz
+  2. tar -zxvf openssl-1.1.1f.tar.gz
+  3. cd openssl-1.1.1f.tar.gz ./config --prefix=/home/emacs01/openssl
+** other parameter introduction
+    --prefix=DIR
+       Rsaref
+       threads
+       no-threads
+       shared
+       no-shared
+       no-<cipher>
+  4. make
+  5. make install
+  6. modify ~/openssl/ssl/openssl.cnf (find configuration by using the command of "openssl version -a")
+     dir=/home/emacs01/openssl/ssl/misc/demoCA
+     default_days= 36500
+     default_bits= 2048
+* Create CA certificate
+  cd ~/openssl/ssl/misc
+  ./CA.sh -newca
+  cd ~/openssl/ssl/misc/demoCA
+  ls
+  
+  chmod -R 660 ~/openssl/ssl/misc/demoCA
+* Create secondary cettificate
+  cd ~/openssl/ssl/misc/demoCA
+   /bin/openssl req -nodes -new -keyout islab_key.pem -out islab_req.pem -days 3650 -config \
+   /etc/pki/tls/openssl.cnf
+** create user certificate
+   /bin/openssl ca -config /etc/pki/tls/openssl.cnf -policy policy_anything -out islab_cert.pem \
+   -infiles islab_req.pem
+   cd ~/openssl/ssl/misc/demoCA
+   ls
+* Openssl application
+  /bin/openssl verify -CApath . \
+  _CAfile cacert.pem islab_cert.pem
+
+  /bin/openssl x509 -noout -issuer -in islab_cert.pem 
+ 
+  /bin/openssl x509 -noout -in islab_cert.pem -dates
+
+  /bin/openssl x509 -noout -in islab_cert.pem -subject
+
+  /bin/openssl x509 -noout -in islab_cert.pem -fingerprint
+
+  /bin/openssl x509 -noout -in islab_cert.pem -fingerprint -sha1
+  
+
+  /bin/openssl -export  -in islab_cert.pem -out islab_cert.p12 -name "Blave's Certificate" -inkey islab_key.pem
+
+  /bin/openssl -in islab_cert.p12 -out islab_key2.pem
+  /bin/openssl x509 -in islab_key2.pem -text \
+  -out islab_cert2.pem
+
+** file encrypt
+    islab_cert.pem is persional certificate
+ echo "This is a text file." > document.txt
+ cat document.txt
+ /bin/openssl smime -encrypt -in document.txt \
+ -out document.enc islab_cert.pem
+ cat document.enc
+
+** file decrypt
+   /bin/openssl smime -decrypt -in document.enc \
+   -recip islab_cert.pem -inkey islab_key.pem
+
+** file signature
+   /bin/openssl smime -sign -inkey islab_key.pem \
+   -signer islab_cert.pem -in document.txt -out document.sig
+
+** file signature verification
+   /bin/openssl smime -verify -in document.sig \
+   -signer islab_cert.pem -out document.txt -CAfile cacert.pem
+* Openssl have two mode
+  interactive batch
+
+
+
+
+
+  
